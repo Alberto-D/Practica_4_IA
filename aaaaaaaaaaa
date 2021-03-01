@@ -103,7 +103,29 @@ def modelToString(model):
 """
 def positionGraphPlan(problem):
     width, height = problem.getWidth(), problem.getHeight()
-     # Instances
+    walls = problem.walls     # if walls[x][y] is True, then that means there is a wall at (x,y)
+    print(walls)
+
+    start_x = problem.startState[0]
+    start_y = problem.startState[1]
+    pacman_x = start_x
+    pacman_y = start_y
+
+    print(start_x,start_y )
+
+    goal_x = problem.goal[0]
+    goal_y = problem.goal[1]
+    print(goal_x,goal_y)
+
+    """
+    Create your variables with unique string names
+    Each variable has a type
+    vname = Variable('name',TYPE)
+    TYPES = INT, PACMAN, OPEN, WALL, FOOD
+    """
+
+    
+    # Instances
     i_pacman = Instance('pacman',PACMAN)
     i_ints = [Instance(0, INT),
               Instance(1, INT),
@@ -114,18 +136,82 @@ def positionGraphPlan(problem):
 
     allinstances = [] # Make sure you fill this with ALL the instances you define
     print("AAAAAAAAAA")
+    "*** YOUR CODE HERE ***"
+
+    # Variables
+    "*** YOUR CODE HERE ***"
+    v_from = 1,0
+    v_one = Variable('one', INT)
+    v_open = Variable('open',OPEN)
+    v_wall = Variable('wall',WALL)
+
+
+
+
+    # Types
+    ROCKET = 'Rocket'
+    PLACE = 'Place'
+    CARGO = 'Cargo'
+        # Instances
+    i_rocket = Instance('rocket', ROCKET)
+    i_london = Instance('london', PLACE)
+    i_paris = Instance('paris', PLACE)
+    i_pkgA = Instance('pkgA', CARGO)
+    i_pkgB = Instance('pkgB', CARGO)
+    i_ints = [Instance(0, INT), 
+            Instance(1, INT), 
+            Instance(2, INT)]
+
+    # Variables
+    v_from = Variable('from', PLACE)
+    v_to = Variable('to', PLACE)
+    v_place = Variable('place', PLACE)
+    v_cargo = Variable('cargo', CARGO)
+    v_fuel_start = Variable('start fuel', INT)
+    v_fuel_end = Variable('end fuel', INT)
+    i_position = [Instance(pacman_x, INT),
+                  Instance(pacman_y, INT)]
 
 
 
 
 
-    walls = problem.walls     # if walls[x][y] is True, then that means there is a wall at (x,y)
-    print(walls)
+
+
+
+    # Operators
+    o_east = Operator('go_east',   # The name of the action
+        # Preconditions
+        [Proposition('at', i_pacman,v_from),
+         Proposition(SUM, i_ints[1],i_position[0] , v_open)],
+        # Adds
+        [Proposition(SUM, i_ints[1],i_position[0] , v_open)],
+        # Deletes
+        [Proposition('at', i_rocket, v_from)])
+    print("ANtes valia ",start_x,start_y,"AHora" ,pacman_x, pacman_y)
+
+
+    start_state = [] # Make sure you fill this with ALL the starting propositions
+
+    goal_state = [] # Make sure you fill this with ALL the propositions required for the goal
+
+    alloperators = [] # Make sure you fill this with ALL the operators you define
+
+    "*** YOUR CODE HERE ***"
 
    
 
+
+
+
+    prob1 = GraphPlanProblem('goto_xy',allinstances,alloperators,start_state, goal_state)
+    prob1.solve()
     
- 
+    # some functions for debugging 
+    #prob1.dump()
+    prob1.display()
+    
+    actions = prob1.getactions()
     "*** YOUR CODE HERE ***"
     return []
     
@@ -194,3 +280,83 @@ fgp = foodGraphPlan
 # Sometimes the logic module uses pretty deep recursion on long expressions
 sys.setrecursionlimit(100000)
     
+
+
+
+
+
+
+
+
+
+
+ start_x = problem.startState[0]
+    start_y = problem.startState[1]
+    pacman_x = start_x
+    pacman_y = start_y
+
+    print(start_x,start_y )
+
+    goal_x = problem.goal[0]
+    goal_y = problem.goal[1]
+    print(goal_x,goal_y)
+
+    """
+    Create your variables with unique string names
+    Each variable has a type
+    vname = Variable('name',TYPE)
+    TYPES = INT, PACMAN, OPEN, WALL, FOOD
+    """
+
+
+
+   # Instances
+    i_pacman = Instance('pacman',PACMAN)
+    i_ints = [Instance(0, INT),
+              Instance(1, INT),
+              Instance(2, INT)]
+    i_open = Instance('open',OPEN)
+    i_wall = Instance('wall',WALL)
+
+
+    allinstances = [] # Make sure you fill this with ALL the instances you define
+    print("AAAAAAAAAA")
+    "*** YOUR CODE HERE ***"
+
+    # Variables
+    "*** YOUR CODE HERE ***"
+    v_from = 1,0
+    v_one = Variable('one', INT)
+    v_open = Variable('open',OPEN)
+    v_wall = Variable('wall',WALL)
+
+    i_position = [Instance(pacman_x, INT),
+                  Instance(pacman_y, INT)]
+
+    # Operators
+    o_east = Operator('go_east',   # The name of the action
+        # Preconditions
+        [Proposition('at', i_pacman,v_from),
+         Proposition(SUM, i_ints[1],i_position[0] , v_open)],
+        # Adds
+        [Proposition(SUM, i_ints[1],i_position[0] , v_open)],
+        # Deletes
+        [Proposition('at', i_rocket, v_from)])
+    print("Antes valia ",start_x,start_y,"AHora" ,pacman_x, pacman_y)
+
+
+    start_state = [] # Make sure you fill this with ALL the starting propositions
+
+    goal_state = [] # Make sure you fill this with ALL the propositions required for the goal
+
+    alloperators = [] # Make sure you fill this with ALL the operators you define
+
+    "*** YOUR CODE HERE ***"
+    prob1 = GraphPlanProblem('goto_xy',allinstances,alloperators,start_state, goal_state)
+    prob1.solve()
+    
+    # some functions for debugging 
+    #prob1.dump()
+    prob1.display()
+    
+    actions = prob1.getactions()

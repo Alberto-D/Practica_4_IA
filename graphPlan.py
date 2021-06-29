@@ -103,87 +103,254 @@ def modelToString(model):
 """
 def positionGraphPlan(problem):
     width, height = problem.getWidth(), problem.getHeight()
-     # Instances
+
+    start_x = problem.startState[0]
+    start_y = problem.startState[1]
+
+    goal_x = problem.goal[0]
+    goal_y = problem.goal[1]
+
+    # Instances
     i_pacman = Instance('pacman',PACMAN)
     i_ints = [Instance(0, INT),
               Instance(1, INT),
               Instance(2, INT)]
     i_open = Instance('open',OPEN)
     i_wall = Instance('wall',WALL)
+    i_start_x = Instance(start_x, INT)
+    i_start_y = Instance(start_y, INT)
+    i_goal_x = Instance(goal_x, INT)
+    i_goal_y = Instance(goal_y, INT)
 
-
-    allinstances = [] # Make sure you fill this with ALL the instances you define
-    print("AAAAAAAAAA")
-
-
-
-
-
+    allinstances = [i_pacman,i_ints[0],i_ints[1], i_ints[0] ,i_open,i_wall,i_start_x,i_start_y,i_goal_x, i_goal_x ] # Make sure you fill this with ALL the instances you define
+    
     walls = problem.walls     # if walls[x][y] is True, then that means there is a wall at (x,y)
-    print(walls)
+    
+    ## Crea los estados final e inicial, al inicial se le anade el laberinto.
+    start_state = [Proposition('at', i_pacman, i_start_x, i_start_y)]
+    goal_state = [Proposition('at', i_pacman, i_goal_x, i_goal_y)]
+
+    for x in range(width):
+        for y in range(height):
+            temp_x = Instance(x, INT)
+            temp_y = Instance(y, INT)
+            allinstances.append(temp_x)
+            allinstances.append(temp_y)
+            if(walls[x][y] == True):
+                start_state.append(Proposition('at',i_wall,temp_x,temp_y))
+            else:
+                start_state.append(Proposition('at',i_open,temp_x,temp_y))
+    
+   
+    x_to = Variable('x_to',INT)
+    x_from = Variable('x_from',INT)
+    y_to = Variable('y_to',INT)
+    y_from = Variable('y_from',INT)
 
    
 
+    o_south = Operator('South',
+         ## Primero comprueba que el pacman esta en xfrom y from y luego que en el to no hay una pared.
+        [Proposition('at', i_pacman, x_from, y_from),
+         Proposition('at', i_open, x_to, y_to),
+         ## des pues comprueba que la x es la misma y la y de from es uno mas abajo.
+         Proposition(EQUAL, x_from, x_to),
+         Proposition(SUM, i_ints[1], y_to, y_from)],
+
+        [Proposition('at', i_pacman,x_to, y_to)],
+        [Proposition('at', i_pacman,x_from, y_from)])
+
+    o_west = Operator('West',
+         ## Primero comprueba que el pacman esta en xfrom y from y luego que en el to no hay una pared.
+        [Proposition('at', i_pacman, x_from, y_from),
+         Proposition('at', i_open, x_to, y_to),
+         ## des pues comprueba que la y es la misma y la x de from es uno mas a la derecha.
+         Proposition(EQUAL, y_from, y_to),
+         Proposition(SUM, i_ints[1], x_to, x_from)],
+
+        [Proposition('at', i_pacman,x_to, y_to)],
+        [Proposition('at', i_pacman,x_from, y_from)])
+
+    o_north = Operator('North',
+         ## Primero comprueba que el pacman esta en xfrom y from y luego que en el to no hay una pared.
+        [Proposition('at', i_pacman, x_from, y_from),
+         Proposition('at', i_open, x_to, y_to),
+         ## des pues comprueba que la x es la misma y la y de from es uno mas arriba.
+         Proposition(EQUAL, x_from, x_to),
+         Proposition(SUM, i_ints[1], y_from, y_to)],
+
+        [Proposition('at', i_pacman,x_to, y_to)],
+        [Proposition('at', i_pacman,x_from, y_from)])
+
+    o_east = Operator('East',
+         ## Primero comprueba que el pacman esta en xfrom y from y luego que en el to no hay una pared.
+        [Proposition('at', i_pacman, x_from, y_from),
+         Proposition('at', i_open, x_to, y_to),
+         ## des pues comprueba que la y es la misma y la x de from es uno mas a la izquierda.
+         Proposition(EQUAL, y_from, y_to),
+         Proposition(SUM, i_ints[1], x_from, x_to)],
+
+        [Proposition('at', i_pacman,x_to, y_to)],
+        [Proposition('at', i_pacman,x_from, y_from)])
+
+
+    alloperators = [o_south,o_west,o_north,o_east] 
+
+    acciones_return = []
+    problem = GraphPlanProblem('final_xy',allinstances,alloperators,start_state, goal_state)
+    solucion = problem.solve()
+    acciones = problem.getactions()
     
- 
-    "*** YOUR CODE HERE ***"
-    return []
+    ## Mira todas las acciones y si son popsibles para el pacman.
+    for nivel in solucion:
+        for accion in nivel:
+            if accion in acciones:
+                acciones_return.append(accion.print_name())
+    
+    return acciones_return
+
     
 
 """
 Now use the operators for moving along with an eat operator you must create to eat 
 all the food in the maze.
 """
-def foodGraphPlan( ):
+def foodGraphPlan(problem ):
     width, height = problem.getWidth(), problem.getHeight()
     walls = problem.walls     # if walls[x][y] is True, then that means there is a wall at (x,y)
-
     start_x = problem.start[0][0]
     start_y = problem.start[0][1]
-
     foodlist = problem.start[1].asList() 
     
-    """The same as the previous question:
-    Operators contain lists of preconditions, add effects, and delete effects
-    which are all composed of propositions (boolean descriptors of the environment)
-    Operators will test the current state propositions to determine whether all
-    the preconditions are true, and then add and delete state propositions 
-    to update the state.
 
-    TYPES = INT, PACMAN, OPEN, WALL, FOOD
-    """
     # Instances
     allinstances = [] # Make sure you fill this with ALL the instances you define
+    i_pacman = Instance('pacman', PACMAN)
+    i_foods = []
+    i_wall = Instance('wall', WALL)
+    i_open = Instance('open', OPEN)
+    i_start_x = Instance(start_x, INT)
+    i_start_y = Instance(start_y, INT)
+    i_ints = [Instance(0, INT), 
+          Instance(1, INT), 
+          Instance(2, INT)]
 
-    "*** YOUR CODE HERE ***"
+   
 
-    # Variables
-    "*** YOUR CODE HERE ***"
-
-    start_state = [] # Make sure you fill this with ALL the starting propositions
-
-    goal_state = [] # Make sure you fill this with ALL the propositions required for the goal
-
-    alloperators = [] # Make sure you fill this with ALL the operators you define
-
-
-    # Operators 
-
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-    print("AAAAAAAAA")
-
-    prob1 = GraphPlanProblem('eatfood',allinstances,
-                             alloperators, start_state, goal_state)
+    allinstances = [i_pacman,i_ints[0],i_ints[1], i_ints[0] ,i_open,i_wall,i_start_x,i_start_y ] # Make sure you fill this with ALL the instances you define
     
-    prob1.solve()
-    actions = prob1.getactions()
-    # functions to help with debugging
-    #prob1.dump()
-    #prob1.display()
-    "*** YOUR CODE HERE ***"
+    walls = problem.walls     # if walls[x][y] is True, then that means there is a wall at (x,y)
+    ## Crea los estados final e inicial, al inicial se le anade el laberinto.
+    start_state = [Proposition('at', i_pacman, i_start_x, i_start_y)]
+    goal_state = []
+    counter = 0
+    for x in range(width):
+        for y in range(height):
+            
+            temp_x = Instance(x, INT)
+            temp_y = Instance(y, INT)
+            allinstances.append(temp_x)
+            allinstances.append(temp_y)
+            ## Se anaden a las instancias las coordenadas de la comida y la comida.
+            temp_foodx = Instance(x, INT)
+            temp_foody = Instance(y, INT)   
+            temp_food = Instance(counter, FOOD)
+            allinstances.append(temp_foodx)
+            allinstances.append(temp_foody)
+            allinstances.append(temp_food)
+            ## Si se encuentra comida se anade a las proposiciones.
+            if (x,y) in foodlist:
+                start_state.append(Proposition('at', temp_food, temp_foodx,temp_foody))
+                goal_state.append(Proposition('eat', temp_food, i_pacman))
+            else:
+                start_state.append(~Proposition('at', temp_food, temp_foodx,temp_foody))
+            counter += 1
 
-    return []
+            if(walls[x][y] == True):
+                start_state.append(Proposition('at',i_wall,temp_x,temp_y))
+            else:
+                start_state.append(Proposition('at',i_open,temp_x,temp_y))
+    
+   
+    x_to = Variable('x_to',INT)
+    x_from = Variable('x_from',INT)
+    y_to = Variable('y_to',INT)
+    y_from = Variable('y_from',INT)
+
+    v_food_x = Variable('place_x', INT)
+    v_food_y = Variable('place_y', INT)
+    v_food = Variable('food', FOOD)
+
+   
+
+    o_south = Operator('South',
+         ## Primero comprueba que el pacman esta en xfrom y from y luego que en el to no hay una pared.
+        [Proposition('at', i_pacman, x_from, y_from),
+         Proposition('at', i_open, x_to, y_to),
+         ## Despues comprueba que la x es la misma y la y de from es uno mas abajo.
+         Proposition(EQUAL, x_from, x_to),
+         Proposition(SUM, i_ints[1], y_to, y_from)],
+
+        [Proposition('at', i_pacman,x_to, y_to)],
+        [Proposition('at', i_pacman,x_from, y_from)])
+
+    o_west = Operator('West',
+         ## Primero comprueba que el pacman esta en xfrom y from y luego que en el to no hay una pared.
+        [Proposition('at', i_pacman, x_from, y_from),
+         Proposition('at', i_open, x_to, y_to),
+         ## Despues comprueba que la y es la misma y la x de from es uno mas a la derecha.
+         Proposition(EQUAL, y_from, y_to),
+         Proposition(SUM, i_ints[1], x_to, x_from)],
+
+        [Proposition('at', i_pacman,x_to, y_to)],
+        [Proposition('at', i_pacman,x_from, y_from)])
+
+    o_north = Operator('North',
+         ## Primero comprueba que el pacman esta en xfrom y from y luego que en el to no hay una pared.
+        [Proposition('at', i_pacman, x_from, y_from),
+         Proposition('at', i_open, x_to, y_to),
+         ## Despues comprueba que la x es la misma y la y de from es uno mas arriba.
+         Proposition(EQUAL, x_from, x_to),
+         Proposition(SUM, i_ints[1], y_from, y_to)],
+
+        [Proposition('at', i_pacman,x_to, y_to)],
+        [Proposition('at', i_pacman,x_from, y_from)])
+
+    o_east = Operator('East',
+         ## Primero comprueba que el pacman esta en xfrom y from y luego que en el to no hay una pared.
+        [Proposition('at', i_pacman, x_from, y_from),
+         Proposition('at', i_open, x_to, y_to),
+         ## Despues comprueba que la y es la misma y la x de from es uno mas a la izquierda.
+         Proposition(EQUAL, y_from, y_to),
+         Proposition(SUM, i_ints[1], x_from, x_to)],
+
+        [Proposition('at', i_pacman,x_to, y_to)],
+        [Proposition('at', i_pacman,x_from, y_from)])
+    
+    o_eat= Operator('Eat', 
+        ## Para comer comprueba que el pacman esta en el sitio y que hay comida.
+        [Proposition('at', i_pacman, v_food_x, v_food_y),
+         Proposition('at', v_food, v_food_x, v_food_y),],
+        [Proposition('eat', v_food, i_pacman)],      
+        [Proposition('at', v_food, v_food_x, v_food_y)])
+
+
+    alloperators = [o_south,o_west,o_north,o_east, o_eat] 
+
+    acciones_return = []
+    problem = GraphPlanProblem('eatfood',allinstances,alloperators,start_state, goal_state)
+    solucion = problem.solve()
+    acciones = problem.getactions()
+    
+    ## Mira todas las acciones y si son posibles para el pacman.
+    for nivel in solucion:
+        for accion in nivel:
+            if accion in acciones:
+                if accion in acciones and accion.print_name() != 'Eat':
+                    acciones_return.append(accion.print_name())
+    
+    return acciones_return
+    
 
 
 
